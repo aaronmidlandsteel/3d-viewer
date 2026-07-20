@@ -3,25 +3,184 @@
 
 <head>
     <meta charset="UTF-8">
-
-    <title>Construction Site Viewer</title>
+    <title>Midland Steel — Construction Site Viewer</title>
 
     <style>
-        html,
-        body {
+        html, body {
             margin: 0;
             width: 100%;
             height: 100%;
             overflow: hidden;
+            background: #87ceeb;
+            font-family: 'Arial Narrow', Arial, sans-serif;
         }
 
         canvas {
             display: block;
         }
+
+        /* ---------- Project name entry (site placard) ---------- */
+
+        #nameOverlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(20, 18, 14, 0.88);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+        }
+
+        .placard {
+            width: 420px;
+            max-width: 88vw;
+            background: #d8a942;
+            background-image: repeating-linear-gradient(
+                135deg,
+                #1a1a1a 0px, #1a1a1a 22px,
+                #f2b90f 22px, #f2b90f 44px
+            );
+            padding: 10px;
+            border-radius: 4px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+        }
+
+        .placard-inner {
+            background: #efe6d3;
+            border: 3px solid #1a1a1a;
+            padding: 26px 24px 22px;
+            text-align: center;
+        }
+
+        .placard-inner .eyebrow {
+            font-size: 11px;
+            letter-spacing: 3px;
+            font-weight: 700;
+            color: #b3400a;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .placard-inner h1 {
+            font-family: 'Arial Black', Arial, sans-serif;
+            font-size: 22px;
+            letter-spacing: 1px;
+            color: #1a1a1a;
+            margin: 0 0 4px;
+            text-transform: uppercase;
+        }
+
+        .placard-inner p {
+            font-size: 13px;
+            color: #4a4a44;
+            margin: 0 0 18px;
+        }
+
+        #projectInput {
+            width: 100%;
+            box-sizing: border-box;
+            font-size: 16px;
+            padding: 10px 12px;
+            border: 2px solid #1a1a1a;
+            background: #fff;
+            color: #1a1a1a;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 14px;
+        }
+
+        #projectInput:focus {
+            outline: 3px solid #b3400a;
+        }
+
+        #startBtn {
+            width: 100%;
+            font-family: 'Arial Black', Arial, sans-serif;
+            font-size: 15px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding: 12px;
+            border: none;
+            background: #1a1a1a;
+            color: #f2b90f;
+            cursor: pointer;
+        }
+
+        #startBtn:hover {
+            background: #333;
+        }
+
+        /* ---------- Controls / lock hint ---------- */
+
+        #hint {
+            position: fixed;
+            left: 50%;
+            bottom: 34px;
+            transform: translateX(-50%);
+            background: rgba(20, 18, 14, 0.72);
+            color: #f2b90f;
+            font-size: 13px;
+            letter-spacing: 1px;
+            padding: 10px 18px;
+            border: 1px solid rgba(242,185,15,0.5);
+            border-radius: 3px;
+            z-index: 10;
+            display: none;
+            pointer-events: none;
+            text-align: center;
+        }
+
+        #crosshair {
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            width: 6px;
+            height: 6px;
+            margin: -3px 0 0 -3px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.65);
+            z-index: 10;
+            display: none;
+            pointer-events: none;
+        }
+
+        #projectLabel {
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            color: #fff;
+            background: rgba(20,18,14,0.55);
+            padding: 8px 14px;
+            font-size: 13px;
+            letter-spacing: 1px;
+            border-left: 4px solid #f2b90f;
+            z-index: 10;
+            display: none;
+        }
+
+        #projectLabel b {
+            color: #f2b90f;
+        }
     </style>
 </head>
 
 <body>
+
+<div id="nameOverlay">
+    <div class="placard">
+        <div class="placard-inner">
+            <div class="eyebrow">Midland Steel &mdash; Site Viewer</div>
+            <h1>Name This Project</h1>
+            <p>Enter a project name for the site entrance sign.</p>
+            <input id="projectInput" type="text" maxlength="40" placeholder="e.g. Portlaoise Distribution Hub" autofocus>
+            <button id="startBtn">Enter Site</button>
+        </div>
+    </div>
+</div>
+
+<div id="projectLabel"></div>
+<div id="hint">Click anywhere to look around &nbsp;•&nbsp; WASD to walk &nbsp;•&nbsp; Shift to jog &nbsp;•&nbsp; Esc to release mouse</div>
+<div id="crosshair"></div>
 
 <script type="module">
 
@@ -33,11 +192,23 @@ import * as THREE from 'https://unpkg.com/three@0.165.0/build/three.module.js';
 
 
 /* =====================================================
+   SITE DIMENSIONS (metres)
+===================================================== */
+
+const WALL_LENGTH = 50;
+const WALL_HEIGHT = 5;
+const WALL_X = -25;   // wall running along Z sits at this X
+const WALL_Z = -25;   // wall running along X sits at this Z
+const SITE_HALF = 40; // fence / ground bound half-extent
+
+
+/* =====================================================
    SCENE
 ===================================================== */
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x87ceeb);
+scene.background = new THREE.Color(0xbfe0f0);
+scene.fog = new THREE.Fog(0xbfe0f0, 30, 130);
 
 
 /* =====================================================
@@ -45,60 +216,147 @@ scene.background = new THREE.Color(0x87ceeb);
 ===================================================== */
 
 const camera = new THREE.PerspectiveCamera(
-    60,
+    62,
     window.innerWidth / window.innerHeight,
     0.1,
     1000
 );
 
-// Human eye height
-camera.position.set(0, 1.7, 30);
+const EYE_HEIGHT = 1.7;
+camera.position.set(0, EYE_HEIGHT, 32);
 
 
 /* =====================================================
    RENDERER
 ===================================================== */
 
-const renderer = new THREE.WebGLRenderer({
-    antialias: true
-});
-renderer.setSize(
-    window.innerWidth,
-    window.innerHeight
-);
-renderer.setPixelRatio(window.devicePixelRatio);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.domElement.style.position = "fixed";
 renderer.domElement.style.top = "0";
 renderer.domElement.style.left = "0";
-renderer.domElement.style.width = "100vw";
-renderer.domElement.style.height = "100vh";
-
 document.body.appendChild(renderer.domElement);
 
-    /* =====================================================
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+
+/* =====================================================
    CLOCK
 ===================================================== */
+
 const clock = new THREE.Clock();
+
 
 /* =====================================================
    LIGHTING
 ===================================================== */
 
-const ambient = new THREE.AmbientLight(
-    0xffffff,
-    0.7
-);
-
+const ambient = new THREE.AmbientLight(0xffffff, 0.55);
 scene.add(ambient);
 
-const sun = new THREE.DirectionalLight(
-    0xffffff,
-    1
-);
+const hemi = new THREE.HemisphereLight(0xbfe0f0, 0x8b7355, 0.5);
+scene.add(hemi);
 
-sun.position.set(20, 30, 20);
-
+const sun = new THREE.DirectionalLight(0xfff3d6, 1.25);
+sun.position.set(40, 55, 25);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.camera.left = -60;
+sun.shadow.camera.right = 60;
+sun.shadow.camera.top = 60;
+sun.shadow.camera.bottom = -60;
+sun.shadow.camera.far = 160;
+sun.shadow.bias = -0.0015;
 scene.add(sun);
+
+
+/* =====================================================
+   PROCEDURAL TEXTURES (canvas-based, no external assets)
+===================================================== */
+
+function makeCanvasTexture(draw, size = 256, repeatX = 1, repeatY = 1) {
+    const c = document.createElement('canvas');
+    c.width = c.height = size;
+    const ctx = c.getContext('2d');
+    draw(ctx, size);
+    const tex = new THREE.CanvasTexture(c);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(repeatX, repeatY);
+    return tex;
+}
+
+// Compacted dirt / gravel ground
+const groundTexture = makeCanvasTexture((ctx, s) => {
+    ctx.fillStyle = '#8a7355';
+    ctx.fillRect(0, 0, s, s);
+    for (let i = 0; i < 2200; i++) {
+        const x = Math.random() * s;
+        const y = Math.random() * s;
+        const r = Math.random() * 1.6 + 0.3;
+        const shade = 100 + Math.random() * 70;
+        ctx.fillStyle = `rgba(${shade | 0},${(shade * 0.85) | 0},${(shade * 0.65) | 0},0.5)`;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    // faint tyre track bands
+    ctx.strokeStyle = 'rgba(40,32,22,0.15)';
+    ctx.lineWidth = 10;
+    for (let i = 0; i < 4; i++) {
+        ctx.beginPath();
+        const yy = (s / 5) * (i + 1);
+        ctx.moveTo(0, yy);
+        ctx.bezierCurveTo(s * 0.3, yy + 20, s * 0.7, yy - 20, s, yy);
+        ctx.stroke();
+    }
+}, 512, 20, 20);
+
+const groundMat = new THREE.MeshStandardMaterial({ map: groundTexture, roughness: 1 });
+
+// Safety-orange hazard weave for hoarding/fence panels
+const fenceTexture = makeCanvasTexture((ctx, s) => {
+    ctx.fillStyle = '#e8720c';
+    ctx.fillRect(0, 0, s, s);
+    ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+    ctx.lineWidth = 3;
+    for (let x = -s; x < s * 2; x += 14) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x + s, s);
+        ctx.stroke();
+    }
+}, 128, 6, 1);
+
+const fenceMat = new THREE.MeshStandardMaterial({
+    map: fenceTexture,
+    roughness: 0.9,
+    transparent: true,
+    opacity: 0.92,
+    side: THREE.DoubleSide
+});
+
+// Corrugated metal look for the site cabin
+const cabinTexture = makeCanvasTexture((ctx, s) => {
+    ctx.fillStyle = '#3f6b91';
+    ctx.fillRect(0, 0, s, s);
+    ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+    ctx.lineWidth = 3;
+    for (let x = 0; x < s; x += 10) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, s);
+        ctx.stroke();
+    }
+}, 128, 4, 1);
+
+const cabinMat = new THREE.MeshStandardMaterial({ map: cabinTexture, roughness: 0.6, metalness: 0.3 });
 
 
 /* =====================================================
@@ -106,156 +364,150 @@ scene.add(sun);
 ===================================================== */
 
 const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(200, 200),
-    new THREE.MeshStandardMaterial({
-        color: 0x8b7355
-    })
+    new THREE.PlaneGeometry(220, 220),
+    groundMat
 );
-
 ground.rotation.x = -Math.PI / 2;
-
+ground.receiveShadow = true;
 scene.add(ground);
 
-    
-    /* =====================================================
-   REBAR GRID
+
+/* =====================================================
+   HELPERS FOR INSTANCED BATCHES
+===================================================== */
+
+const dummy = new THREE.Object3D();
+
+function buildInstanced(geometry, material, count, castShadow = true, receiveShadow = false) {
+    const mesh = new THREE.InstancedMesh(geometry, material, count);
+    mesh.castShadow = castShadow;
+    mesh.receiveShadow = receiveShadow;
+    return mesh;
+}
+
+
+/* =====================================================
+   SLAB REBAR GRID (near origin — represents mesh reinforcement)
 ===================================================== */
 
 const rebarMaterial = new THREE.MeshStandardMaterial({
-    color: 0x444444,
-    metalness: 0.9,
-    roughness: 0.5
+    color: 0x555555,
+    metalness: 0.85,
+    roughness: 0.45
 });
 
-for (let i = -10; i <= 10; i += 1) {
+{
+    const barsX = [];
+    const barsZ = [];
+    for (let i = -10; i <= 10; i += 1) {
+        barsX.push(i);
+        barsZ.push(i);
+    }
 
-    // Lines running X direction
-    const bar1 = new THREE.Mesh(
-        new THREE.BoxGeometry(20, 0.05, 0.05),
-        rebarMaterial
-    );
+    const geoX = new THREE.BoxGeometry(20, 0.05, 0.05);
+    const geoZ = new THREE.BoxGeometry(0.05, 0.05, 20);
 
-    bar1.position.set(0, 0.03, i);
+    const meshX = buildInstanced(geoX, rebarMaterial, barsX.length, false, false);
+    const meshZ = buildInstanced(geoZ, rebarMaterial, barsZ.length, false, false);
 
-    scene.add(bar1);
+    barsX.forEach((z, idx) => {
+        dummy.position.set(0, 0.03, z);
+        dummy.rotation.set(0, 0, 0);
+        dummy.updateMatrix();
+        meshX.setMatrixAt(idx, dummy.matrix);
+    });
 
-    // Lines running Z direction
-    const bar2 = new THREE.Mesh(
-        new THREE.BoxGeometry(0.05, 0.05, 20),
-        rebarMaterial
-    );
+    barsZ.forEach((x, idx) => {
+        dummy.position.set(x, 0.03, 0);
+        dummy.rotation.set(0, 0, 0);
+        dummy.updateMatrix();
+        meshZ.setMatrixAt(idx, dummy.matrix);
+    });
 
-    bar2.position.set(i, 0.03, 0);
-
-    scene.add(bar2);
+    scene.add(meshX, meshZ);
 }
-``
+
+
 /* =====================================================
-   RETAINING WALL REBAR
+   RETAINING WALL REBAR — 50m long x 5m high, two walls at 90°
 ===================================================== */
 
 const wallRebarMaterial = new THREE.MeshStandardMaterial({
-    color: 0x333333,
-    metalness: 0.9,
+    color: 0x3a3a3a,
+    metalness: 0.85,
     roughness: 0.4
 });
 
-// Vertical bars
+{
+    const half = WALL_LENGTH / 2;
+    const vertPositions = []; // {x,z}
+    const horizPositions = []; // {x,z, rotY}  rotY: 0 = bar runs along X, PI/2 = bar runs along Z
 
-for(let i = -10; i <= 10; i += 1){
+    // Wall 1 — runs along X at Z = WALL_Z
+    for (let x = -half; x <= half; x += 1) {
+        vertPositions.push({ x, z: WALL_Z });
+    }
+    for (let y = 0.5; y <= WALL_HEIGHT - 0.5; y += 0.5) {
+        horizPositions.push({ x: 0, z: WALL_Z, y, rotZ: Math.PI / 2, length: WALL_LENGTH });
+    }
 
- const bar = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.04, 0.04, 7),
-    wallRebarMaterial
-);
+    // Wall 2 — runs along Z at X = WALL_X
+    for (let z = -half; z <= half; z += 1) {
+        vertPositions.push({ x: WALL_X, z });
+    }
+    for (let y = 0.5; y <= WALL_HEIGHT - 0.5; y += 0.5) {
+        horizPositions.push({ x: WALL_X, z: 0, y, rotX: Math.PI / 2, length: WALL_LENGTH });
+    }
 
-    bar.position.set(i, 3.5, -20);
+    const vertGeo = new THREE.CylinderGeometry(0.045, 0.045, WALL_HEIGHT, 6);
+    const vertMesh = buildInstanced(vertGeo, wallRebarMaterial, vertPositions.length);
+    vertPositions.forEach((p, idx) => {
+        dummy.position.set(p.x, WALL_HEIGHT / 2, p.z);
+        dummy.rotation.set(0, 0, 0);
+        dummy.updateMatrix();
+        vertMesh.setMatrixAt(idx, dummy.matrix);
+    });
+    scene.add(vertMesh);
 
-    scene.add(bar);
+    const horizGeo = new THREE.CylinderGeometry(0.045, 0.045, WALL_LENGTH, 6);
+    const horizMesh = buildInstanced(horizGeo, wallRebarMaterial, horizPositions.length);
+    horizPositions.forEach((p, idx) => {
+        dummy.position.set(p.x, p.y, p.z);
+        dummy.rotation.set(p.rotX || 0, 0, p.rotZ || 0);
+        dummy.updateMatrix();
+        horizMesh.setMatrixAt(idx, dummy.matrix);
+    });
+    scene.add(horizMesh);
 }
 
-// Horizontal bars
-
-for(let y = 0.5; y <= 5.5; y += 0.5){
-
-const bar = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.04, 0.04, 20),
-    wallRebarMaterial
-);
-
-
-    bar.rotation.z = Math.PI / 2;
-
-    bar.position.set(0, y, -20);
-
-    scene.add(bar);
-}
-
-    /* =====================================================
-   SECOND RETAINING WALL (90 DEGREES)
-===================================================== */
-
-// Vertical bars
-
-for(let i = -10; i <= 10; i += 1){
-
-    const bar = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.04, 0.04, 7),
-        wallRebarMaterial
-    );
-
-    bar.position.set(-10, 3.5, i);
-
-    scene.add(bar);
-}
-
-// Horizontal bars
-
-for(let y = 0.5; y <= 5.5; y += 0.5){
-
-    const bar = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.04, 0.04, 20),
-        wallRebarMaterial
-    );
-
-    bar.rotation.x = Math.PI / 2;
-
-    bar.position.set(-10, y, 0);
-
-    scene.add(bar);
-}
-
-    
-
-    /* =====================================================
-   CONCRETE FOOTING
-===================================================== */
-
-const footing = new THREE.Mesh(
-    new THREE.BoxGeometry(24, 1, 3),
-    new THREE.MeshStandardMaterial({
-        color: 0xb0b0b0
-    })
-);
-
-footing.position.set(0, 0.5, -20);
-
-scene.add(footing);
-
-
-    const footing2 = new THREE.Mesh(
-    new THREE.BoxGeometry(3, 1, 24),
-    new THREE.MeshStandardMaterial({
-        color: 0xb0b0b0
-    })
-);
-
-footing2.position.set(-10, 0.5, 0);
-
-scene.add(footing2);
 
 /* =====================================================
-   STEEL COLUMNS
+   CONCRETE FOOTINGS
+===================================================== */
+
+const footingMat = new THREE.MeshStandardMaterial({ color: 0xb0b0b0, roughness: 0.85 });
+
+const footing1 = new THREE.Mesh(
+    new THREE.BoxGeometry(WALL_LENGTH + 2, 1, 3),
+    footingMat
+);
+footing1.position.set(0, 0.5, WALL_Z);
+footing1.castShadow = true;
+footing1.receiveShadow = true;
+scene.add(footing1);
+
+const footing2 = new THREE.Mesh(
+    new THREE.BoxGeometry(3, 1, WALL_LENGTH + 2),
+    footingMat
+);
+footing2.position.set(WALL_X, 0.5, 0);
+footing2.castShadow = true;
+footing2.receiveShadow = true;
+scene.add(footing2);
+
+
+/* =====================================================
+   STEEL COLUMN & BEAM FRAME (structural steel bay)
 ===================================================== */
 
 const steelMaterial = new THREE.MeshStandardMaterial({
@@ -264,54 +516,323 @@ const steelMaterial = new THREE.MeshStandardMaterial({
     roughness: 0.4
 });
 
-const columnPositions = [
+{
+    const columnPositions = [
+        [-5, 5, -10], [5, 5, -10],
+        [-5, 5, 0], [5, 5, 0],
+        [-5, 5, 10], [5, 5, 10]
+    ];
 
-    [-5, 5, -10],
-    [ 5, 5, -10],
+    const colGeo = new THREE.BoxGeometry(0.4, 10, 0.4);
+    const colMesh = buildInstanced(colGeo, steelMaterial, columnPositions.length);
+    columnPositions.forEach((pos, idx) => {
+        dummy.position.set(pos[0], pos[1], pos[2]);
+        dummy.rotation.set(0, 0, 0);
+        dummy.updateMatrix();
+        colMesh.setMatrixAt(idx, dummy.matrix);
+    });
+    scene.add(colMesh);
 
-    [-5, 5,   0],
-    [ 5, 5,   0],
+    const beamPositions = [-10, 0, 10];
+    const beamGeo = new THREE.BoxGeometry(10, 0.4, 0.4);
+    const beamMesh = buildInstanced(beamGeo, steelMaterial, beamPositions.length);
+    beamPositions.forEach((z, idx) => {
+        dummy.position.set(0, 10, z);
+        dummy.rotation.set(0, 0, 0);
+        dummy.updateMatrix();
+        beamMesh.setMatrixAt(idx, dummy.matrix);
+    });
+    scene.add(beamMesh);
+}
 
-    [-5, 5,  10],
-    [ 5, 5,  10]
-
-];
-
-columnPositions.forEach(pos => {
-
-    const column = new THREE.Mesh(
-        new THREE.BoxGeometry(0.4, 10, 0.4),
-        steelMaterial
-    );
-
-    column.position.set(
-        pos[0],
-        pos[1],
-        pos[2]
-    );
-
-    scene.add(column);
-
-});
 
 /* =====================================================
-   BEAMS
+   SITE HOARDING / PERIMETER FENCE (with entrance gap on +Z side)
 ===================================================== */
 
-const beamPositions = [-10, 0, 10];
+const fencePosts = [];
+const FENCE_HEIGHT = 2.1;
+const gapHalf = 4; // entrance gap width/2 on the south (+Z) side
 
-beamPositions.forEach(z => {
+function addFenceRun(x1, z1, x2, z2, skipRange) {
+    const dx = x2 - x1;
+    const dz = z2 - z1;
+    const len = Math.hypot(dx, dz);
+    const segLen = 2.5;
+    const segs = Math.round(len / segLen);
+    for (let i = 0; i < segs; i++) {
+        const t0 = i / segs, t1 = (i + 1) / segs;
+        const sx = x1 + dx * (t0 + t1) / 2;
+        const sz = z1 + dz * (t0 + t1) / 2;
+        if (skipRange && skipRange(sx, sz)) continue;
+        fencePosts.push({
+            x: sx, z: sz,
+            rotY: Math.atan2(dx, dz),
+            length: len / segs
+        });
+    }
+}
 
-    const beam = new THREE.Mesh(
-        new THREE.BoxGeometry(10, 0.4, 0.4),
-        steelMaterial
+addFenceRun(-SITE_HALF, -SITE_HALF, SITE_HALF, -SITE_HALF); // north
+addFenceRun(-SITE_HALF, SITE_HALF, SITE_HALF, SITE_HALF, (x) => Math.abs(x) < gapHalf); // south w/ gate gap
+addFenceRun(-SITE_HALF, -SITE_HALF, -SITE_HALF, SITE_HALF); // west
+addFenceRun(SITE_HALF, -SITE_HALF, SITE_HALF, SITE_HALF);   // east
+
+{
+    const panelGeo = new THREE.PlaneGeometry(2.6, FENCE_HEIGHT);
+    const panelMesh = buildInstanced(panelGeo, fenceMat, fencePosts.length, true, false);
+    const postGeo = new THREE.CylinderGeometry(0.06, 0.06, FENCE_HEIGHT + 0.3, 6);
+    const postMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.7 });
+    const postMesh = buildInstanced(postGeo, postMat, fencePosts.length);
+
+    fencePosts.forEach((p, idx) => {
+        dummy.position.set(p.x, FENCE_HEIGHT / 2, p.z);
+        dummy.rotation.set(0, p.rotY, 0);
+        dummy.updateMatrix();
+        panelMesh.setMatrixAt(idx, dummy.matrix);
+
+        dummy.position.set(p.x, (FENCE_HEIGHT + 0.3) / 2, p.z);
+        dummy.updateMatrix();
+        postMesh.setMatrixAt(idx, dummy.matrix);
+    });
+
+    scene.add(panelMesh, postMesh);
+}
+
+
+/* =====================================================
+   SITE CABIN
+===================================================== */
+
+{
+    const cabin = new THREE.Mesh(
+        new THREE.BoxGeometry(6, 2.6, 3),
+        cabinMat
     );
+    cabin.position.set(28, 1.3, 22);
+    cabin.castShadow = true;
+    cabin.receiveShadow = true;
+    scene.add(cabin);
 
-    beam.position.set(0, 10, z);
+    const roof = new THREE.Mesh(
+        new THREE.BoxGeometry(6.3, 0.2, 3.3),
+        new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.8 })
+    );
+    roof.position.set(28, 2.7, 22);
+    roof.castShadow = true;
+    scene.add(roof);
+}
 
-    scene.add(beam);
 
+/* =====================================================
+   MATERIAL STACKS — rebar bundles & timber pallets
+===================================================== */
+
+{
+    // Rebar bundle piles (short instanced cylinders stacked)
+    const bundleGeo = new THREE.CylinderGeometry(0.04, 0.04, 3, 6);
+    const bundlePositions = [];
+    const stackOrigins = [[24, -15], [24, -18], [24, -21]];
+    stackOrigins.forEach(([bx, bz]) => {
+        for (let row = 0; row < 5; row++) {
+            for (let col = 0; col < 6; col++) {
+                bundlePositions.push({
+                    x: bx + col * 0.09,
+                    y: 0.1 + row * 0.085,
+                    z: bz
+                });
+            }
+        }
+    });
+    const bundleMesh = buildInstanced(bundleGeo, rebarMaterial, bundlePositions.length);
+    bundlePositions.forEach((p, idx) => {
+        dummy.position.set(p.x, p.y, p.z);
+        dummy.rotation.set(Math.PI / 2, 0, 0);
+        dummy.updateMatrix();
+        bundleMesh.setMatrixAt(idx, dummy.matrix);
+    });
+    scene.add(bundleMesh);
+
+    // Timber pallet crates
+    const crateMat = new THREE.MeshStandardMaterial({ color: 0x9a6b3c, roughness: 0.9 });
+    const crateGeo = new THREE.BoxGeometry(1.2, 0.9, 1.2);
+    const cratePositions = [[24, 0.45, -25], [25.6, 0.45, -25], [24.8, 1.35, -25]];
+    const crateMesh = buildInstanced(crateGeo, crateMat, cratePositions.length);
+    cratePositions.forEach((p, idx) => {
+        dummy.position.set(p[0], p[1], p[2]);
+        dummy.rotation.set(0, 0.1, 0);
+        dummy.updateMatrix();
+        crateMesh.setMatrixAt(idx, dummy.matrix);
+    });
+    scene.add(crateMesh);
+}
+
+
+/* =====================================================
+   TRAFFIC CONES near the entrance
+===================================================== */
+
+{
+    const coneMat = new THREE.MeshStandardMaterial({ color: 0xe8720c, roughness: 0.6 });
+    const coneGeo = new THREE.ConeGeometry(0.22, 0.6, 10);
+    const conePositions = [[-3.2, 30], [3.2, 30], [-3.2, 24], [3.2, 24]];
+    const coneMesh = buildInstanced(coneGeo, coneMat, conePositions.length);
+    conePositions.forEach((p, idx) => {
+        dummy.position.set(p[0], 0.3, p[1]);
+        dummy.rotation.set(0, 0, 0);
+        dummy.updateMatrix();
+        coneMesh.setMatrixAt(idx, dummy.matrix);
+    });
+    scene.add(coneMesh);
+}
+
+
+/* =====================================================
+   COLLISION BODIES (simple, used for realistic walking)
+===================================================== */
+
+const collisionBoxes = [
+    // footings
+    { minX: -half(WALL_LENGTH + 2) + 0, maxX: half(WALL_LENGTH + 2), minZ: WALL_Z - 1.5, maxZ: WALL_Z + 1.5 },
+    { minX: WALL_X - 1.5, maxX: WALL_X + 1.5, minZ: -half(WALL_LENGTH + 2), maxZ: half(WALL_LENGTH + 2) },
+    // cabin footprint
+    { minX: 28 - 3.2, maxX: 28 + 3.2, minZ: 22 - 1.7, maxZ: 22 + 1.7 }
+];
+
+function half(n) { return n / 2; }
+
+const collisionCircles = [
+    [-5, -10, 0.35], [5, -10, 0.35],
+    [-5, 0, 0.35], [5, 0, 0.35],
+    [-5, 10, 0.35], [5, 10, 0.35]
+];
+
+
+/* =====================================================
+   ENTRANCE SIGN (text set from the project-name overlay)
+===================================================== */
+
+let signCanvas, signCtx, signTexture, signMesh;
+
+function buildSign() {
+    signCanvas = document.createElement('canvas');
+    signCanvas.width = 1024;
+    signCanvas.height = 512;
+    signCtx = signCanvas.getContext('2d');
+    signTexture = new THREE.CanvasTexture(signCanvas);
+
+    const postMat = new THREE.MeshStandardMaterial({ color: 0x6b4a2b, roughness: 0.95 });
+    const postGeo = new THREE.CylinderGeometry(0.09, 0.09, 3.6, 8);
+
+    const leftPost = new THREE.Mesh(postGeo, postMat);
+    leftPost.position.set(-2.6, 1.8, 25);
+    leftPost.castShadow = true;
+
+    const rightPost = new THREE.Mesh(postGeo, postMat);
+    rightPost.position.set(2.6, 1.8, 25);
+    rightPost.castShadow = true;
+
+    const boardMat = new THREE.MeshStandardMaterial({ map: signTexture, roughness: 0.85 });
+    const boardGeo = new THREE.PlaneGeometry(5.6, 2.8);
+    signMesh = new THREE.Mesh(boardGeo, boardMat);
+    signMesh.position.set(0, 2.6, 25);
+    signMesh.castShadow = true;
+
+    const frameMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.8 });
+    const frameGeo = new THREE.BoxGeometry(5.8, 3.0, 0.08);
+    const frame = new THREE.Mesh(frameGeo, frameMat);
+    frame.position.set(0, 2.6, 24.95);
+
+    scene.add(leftPost, rightPost, frame, signMesh);
+}
+
+function drawSignText(projectName) {
+    const w = signCanvas.width, h = signCanvas.height;
+    signCtx.fillStyle = '#efe6d3';
+    signCtx.fillRect(0, 0, w, h);
+
+    signCtx.strokeStyle = '#1a1a1a';
+    signCtx.lineWidth = 14;
+    signCtx.strokeRect(7, 7, w - 14, h - 14);
+
+    signCtx.fillStyle = '#b3400a';
+    signCtx.font = 'bold 46px Arial';
+    signCtx.textAlign = 'center';
+    signCtx.fillText('MIDLAND STEEL', w / 2, 110);
+
+    signCtx.fillStyle = '#4a4a44';
+    signCtx.font = '28px Arial';
+    signCtx.fillText('NOW BUILDING', w / 2, 170);
+
+    signCtx.fillStyle = '#1a1a1a';
+    signCtx.font = 'bold 64px Arial';
+    wrapText(signCtx, projectName || 'Untitled Project', w / 2, 280, w - 160, 70);
+
+    signCtx.strokeStyle = '#1a1a1a';
+    signCtx.lineWidth = 4;
+    signCtx.beginPath();
+    signCtx.moveTo(80, h - 90);
+    signCtx.lineTo(w - 80, h - 90);
+    signCtx.stroke();
+
+    signCtx.fillStyle = '#4a4a44';
+    signCtx.font = '24px Arial';
+    signCtx.fillText('Reinforcement & Structural Steel — Mountmellick, Co. Laois', w / 2, h - 45);
+
+    signTexture.needsUpdate = true;
+}
+
+function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+    const words = text.toUpperCase().split(' ');
+    let line = '';
+    const lines = [];
+    for (const word of words) {
+        const test = line + word + ' ';
+        if (ctx.measureText(test).width > maxWidth && line) {
+            lines.push(line.trim());
+            line = word + ' ';
+        } else {
+            line = test;
+        }
+    }
+    lines.push(line.trim());
+    const startY = y - ((lines.length - 1) * lineHeight) / 2;
+    lines.forEach((l, i) => ctx.fillText(l, x, startY + i * lineHeight));
+}
+
+buildSign();
+drawSignText('');
+
+
+/* =====================================================
+   PROJECT NAME OVERLAY WIRING
+===================================================== */
+
+const nameOverlay = document.getElementById('nameOverlay');
+const projectInput = document.getElementById('projectInput');
+const startBtn = document.getElementById('startBtn');
+const hint = document.getElementById('hint');
+const crosshair = document.getElementById('crosshair');
+const projectLabel = document.getElementById('projectLabel');
+
+let siteEntered = false;
+
+function enterSite() {
+    const name = projectInput.value.trim() || 'Untitled Project';
+    drawSignText(name);
+    projectLabel.innerHTML = `Midland Steel — <b>${name.replace(/</g, '')}</b>`;
+    projectLabel.style.display = 'block';
+    nameOverlay.style.display = 'none';
+    hint.style.display = 'block';
+    crosshair.style.display = 'block';
+    siteEntered = true;
+}
+
+startBtn.addEventListener('click', enterSite);
+projectInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') enterSite();
 });
+
 
 /* =====================================================
    INPUT
@@ -319,53 +840,114 @@ beamPositions.forEach(z => {
 
 const keys = {};
 
-window.addEventListener("keydown", (e) => {
-    keys[e.key.toLowerCase()] = true;
-});
+window.addEventListener('keydown', (e) => { keys[e.key.toLowerCase()] = true; });
+window.addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; });
 
-window.addEventListener("keyup", (e) => {
-    keys[e.key.toLowerCase()] = false;
-});
+
 /* =====================================================
    POINTER LOCK
 ===================================================== */
 
 let mouseLocked = false;
 
-document.addEventListener("click", () => {
+document.addEventListener('click', () => {
+    if (!siteEntered) return;
     document.body.requestPointerLock();
 });
 
-document.addEventListener("pointerlockchange", () => {
+document.addEventListener('pointerlockchange', () => {
     mouseLocked = document.pointerLockElement === document.body;
+    hint.style.opacity = mouseLocked ? '0.35' : '1';
 });
+
 
 /* =====================================================
    MOUSE LOOK
 ===================================================== */
+
 let yaw = 0;
 let pitch = 0;
+const MOUSE_SENSITIVITY = 0.0022;
 
-window.addEventListener("mousemove", (e) => {
-
+window.addEventListener('mousemove', (e) => {
     if (!mouseLocked) return;
 
-    yaw -= e.movementX * 0.002;
+    yaw -= e.movementX * MOUSE_SENSITIVITY;
+    pitch -= e.movementY * MOUSE_SENSITIVITY;
+    pitch = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, pitch));
 
-    pitch -= e.movementY * 0.002;
-
-    // Prevent neck-breaking
-    pitch = Math.max(
-        -Math.PI / 2.2,
-        Math.min(Math.PI / 2.2, pitch)
-    );
-
-    camera.rotation.order = "YXZ";
-
+    camera.rotation.order = 'YXZ';
     camera.rotation.y = yaw;
     camera.rotation.x = pitch;
-
 });
+
+
+/* =====================================================
+   REALISTIC WALKING MOVEMENT
+   - delta-time based (frame-rate independent)
+   - smoothed acceleration / deceleration
+   - subtle head bob while moving
+   - collision against footings, cabin, and columns
+   - clamped to the fenced site boundary
+===================================================== */
+
+const WALK_SPEED = 3.4;   // m/s, brisk walking pace
+const RUN_SPEED = 6.2;    // m/s, jogging pace
+const ACCEL = 12;         // how quickly velocity catches up to target
+const velocity = new THREE.Vector2(0, 0); // x,z world-space velocity
+let bobTime = 0;
+
+function collidesAt(x, z) {
+    const r = 0.35; // player radius
+    for (const b of collisionBoxes) {
+        if (x + r > b.minX && x - r < b.maxX && z + r > b.minZ && z - r < b.maxZ) return true;
+    }
+    for (const [cx, cz, cr] of collisionCircles) {
+        const dx = x - cx, dz = z - cz;
+        if (dx * dx + dz * dz < (cr + r) * (cr + r)) return true;
+    }
+    return false;
+}
+
+function updateMovement(dt) {
+    const forward = (keys['w'] ? 1 : 0) - (keys['s'] ? 1 : 0);
+    const strafe = (keys['d'] ? 1 : 0) - (keys['a'] ? 1 : 0);
+
+    let targetX = 0, targetZ = 0;
+    if (forward || strafe) {
+        const len = Math.hypot(forward, strafe) || 1;
+        const fN = forward / len, sN = strafe / len;
+        const speed = keys['shift'] ? RUN_SPEED : WALK_SPEED;
+
+        targetX = (-Math.sin(yaw) * fN + Math.cos(yaw) * sN) * speed;
+        targetZ = (-Math.cos(yaw) * fN - Math.sin(yaw) * sN) * speed;
+    }
+
+    // smooth toward target (acceleration/deceleration for a natural feel)
+    velocity.x += (targetX - velocity.x) * Math.min(1, ACCEL * dt);
+    velocity.y += (targetZ - velocity.y) * Math.min(1, ACCEL * dt);
+
+    let nx = camera.position.x + velocity.x * dt;
+    let nz = camera.position.z + velocity.y * dt;
+
+    // keep inside the fenced site
+    nx = Math.max(-SITE_HALF + 1, Math.min(SITE_HALF - 1, nx));
+    nz = Math.max(-SITE_HALF + 1, Math.min(SITE_HALF - 1, nz));
+
+    // resolve collisions per axis so sliding along walls feels natural
+    if (!collidesAt(nx, camera.position.z)) camera.position.x = nx;
+    if (!collidesAt(camera.position.x, nz)) camera.position.z = nz;
+
+    // head bob, scaled by current speed
+    const speedNow = Math.hypot(velocity.x, velocity.y);
+    if (speedNow > 0.05) {
+        bobTime += dt * speedNow * 1.8;
+        camera.position.y = EYE_HEIGHT + Math.sin(bobTime) * 0.035;
+    } else {
+        bobTime += dt * 2;
+        camera.position.y += (EYE_HEIGHT - camera.position.y) * Math.min(1, dt * 6);
+    }
+}
 
 
 /* =====================================================
@@ -373,30 +955,14 @@ window.addEventListener("mousemove", (e) => {
 ===================================================== */
 
 function animate() {
-
     requestAnimationFrame(animate);
 
-    const speed = 0.3;
+    const dt = Math.min(clock.getDelta(), 0.05); // clamp to avoid big jumps on tab-switch
 
-  if (keys["w"]) {
-    camera.position.x -= Math.sin(yaw) * speed;
-    camera.position.z -= Math.cos(yaw) * speed;
-}
+    if (siteEntered) {
+        updateMovement(dt);
+    }
 
-if (keys["s"]) {
-    camera.position.x += Math.sin(yaw) * speed;
-    camera.position.z += Math.cos(yaw) * speed;
-}
-
-if (keys["a"]) {
-    camera.position.x -= Math.cos(yaw) * speed;
-    camera.position.z += Math.sin(yaw) * speed;
-}
-
-if (keys["d"]) {
-    camera.position.x += Math.cos(yaw) * speed;
-    camera.position.z -= Math.sin(yaw) * speed;
-}
     renderer.render(scene, camera);
 }
 
