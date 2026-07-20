@@ -150,6 +150,20 @@ columnPositions.forEach(pos => {
     scene.add(column);
 
 });
+
+    /* =====================================================
+   BEAM
+===================================================== */
+
+const beam = new THREE.Mesh(
+    new THREE.BoxGeometry(10, 0.4, 0.4),
+    steelMaterial
+);
+
+beam.position.set(0, 10, -5);
+
+scene.add(beam);
+    
 /* =====================================================
    CONTAINERS
 ===================================================== */
