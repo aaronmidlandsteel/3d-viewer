@@ -1,15 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<title>Construction Viewer</title>
+<meta charset=
+<title>Construction Site Viewer</title>
 
 <style>
-body {
-    margin: 0;
-    overflow: hidden;
+body{
+    margin:0;
+    overflow:hidden;
 }
 </style>
+
 </head>
 <body>
 
@@ -18,63 +19,97 @@ body {
 import * as THREE from 'https://unpkg.com/three@0.165.0/build/three.module.js';
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x87CEEB);
+scene.background = new THREE.Color(0x87ceeb);
 
 const camera = new THREE.PerspectiveCamera(
     75,
-    window.innerWidth / window.innerHeight,
+    window.innerWidth/window.innerHeight,
     0.1,
     1000
 );
 
-const renderer = new THREE.WebGLRenderer();
-renderer.setSize(window.innerWidth, window.innerHeight);
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(window.innerWidth,window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-const light = new THREE.DirectionalLight(0xffffff, 1);
-light.position.set(10, 20, 10);
-scene.add(light);
+const ambient = new THREE.AmbientLight(0xffffff,0.7);
+scene.add(ambient);
+
+const sun = new THREE.DirectionalLight(0xffffff,1);
+sun.position.set(20,30,20);
+scene.add(sun);
+
+// Ground
 
 const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(100, 100),
-    new THREE.MeshStandardMaterial({ color: 0x777777 })
+    new THREE.PlaneGeometry(200,200),
+    new THREE.MeshStandardMaterial({
+        color:0x707070
+    })
 );
 
-ground.rotation.x = -Math.PI / 2;
+ground.rotation.x = -Math.PI/2;
 scene.add(ground);
 
-const building = new THREE.Mesh(
-    new THREE.BoxGeometry(10, 5, 10),
-    new THREE.MeshStandardMaterial({ color: 0xff9900 })
+// Main Steel Building
+
+const structure = new THREE.Mesh(
+    new THREE.BoxGeometry(20,8,20),
+    new THREE.MeshStandardMaterial({
+        color:0x999999,
+        wireframe:true
+    })
 );
 
-building.position.set(0, 2.5, 0);
-scene.add(building);
+structure.position.y = 4;
+scene.add(structure);
 
-camera.position.set(0, 2, 15);
+// Containers
+
+for(let i=0;i<15;i++){
+
+    const container = new THREE.Mesh(
+        new THREE.BoxGeometry(6,2.5,2.5),
+        new THREE.MeshStandardMaterial({
+            color:0x0066ff
+        })
+    );
+
+    container.position.set(
+        (Math.random()-0.5)*100,
+        1.25,
+        (Math.random()-0.5)*100
+    );
+
+    scene.add(container);
+}
+
+// Camera
+
+camera.position.set(0,2,30);
 
 const keys = {};
 
-window.addEventListener("keydown", (e) => {
+window.addEventListener("keydown",(e)=>{
     keys[e.key.toLowerCase()] = true;
 });
 
-window.addEventListener("keyup", (e) => {
+window.addEventListener("keyup",(e)=>{
     keys[e.key.toLowerCase()] = false;
 });
 
-function animate() {
+function animate(){
 
     requestAnimationFrame(animate);
 
-    const speed = 0.1;
+    const speed = 0.3;
 
-    if (keys["w"]) camera.position.z -= speed;
-    if (keys["s"]) camera.position.z += speed;
-    if (keys["a"]) camera.position.x -= speed;
-    if (keys["d"]) camera.position.x += speed;
+    if(keys["w"]) camera.position.z -= speed;
+    if(keys["s"]) camera.position.z += speed;
+    if(keys["a"]) camera.position.x -= speed;
+    if(keys["d"]) camera.position.x += speed;
 
-    renderer.render(scene, camera);
+    renderer.render(scene,camera);
 }
 
 animate();
