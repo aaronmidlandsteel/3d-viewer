@@ -207,28 +207,6 @@ rearBeam.position.set(0, 10, 5);
 
 scene.add(rearBeam);
     
-/* =====================================================
-   CONTAINERS
-===================================================== */
-
-for (let i = 0; i < 15; i++) {
-
-    const container = new THREE.Mesh(
-        new THREE.BoxGeometry(6, 2.5, 2.5),
-        new THREE.MeshStandardMaterial({
-            color: 0x0066ff
-        })
-    );
-
-    container.position.set(
-        (Math.random() - 0.5) * 100,
-        1.25,
-        (Math.random() - 0.5) * 100
-    );
-
-    scene.add(container);
-}
-
 
 /* =====================================================
    INPUT
