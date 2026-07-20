@@ -163,6 +163,15 @@ const beam = new THREE.Mesh(
 beam.position.set(0, 10, -5);
 
 scene.add(beam);
+
+    const rearBeam = new THREE.Mesh(
+    new THREE.BoxGeometry(10, 0.4, 0.4),
+    steelMaterial
+);
+
+rearBeam.position.set(0, 10, 5);
+
+scene.add(rearBeam);
     
 /* =====================================================
    CONTAINERS
