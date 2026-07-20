@@ -10,7 +10,6 @@ body {
     overflow: hidden;
 }
 </style>
-
 </head>
 <body>
 
@@ -33,67 +32,54 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
 const light = new THREE.DirectionalLight(0xffffff, 1);
-light.position.set(10,20,10);
+light.position.set(10, 20, 10);
 scene.add(light);
 
-// Ground
 const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(100,100),
-    new THREE.MeshStandardMaterial({
-        color: 0x777777
-    })
+    new THREE.PlaneGeometry(100, 100),
+    new THREE.MeshStandardMaterial({ color: 0x777777 })
 );
 
 ground.rotation.x = -Math.PI / 2;
 scene.add(ground);
 
-// Building
 const building = new THREE.Mesh(
-    new THREE.BoxGeometry(10,5,10),
-    new THREE.MeshStandardMaterial({
-        color: 0xff9900
-    })
+    new THREE.BoxGeometry(10, 5, 10),
+    new THREE.MeshStandardMaterial({ color: 0xff9900 })
 );
 
-building.position.set(0,2.5,0);
+building.position.set(0, 2.5, 0);
 scene.add(building);
 
-camera.position.set(0,2,15);
+camera.position.set(0, 2, 15);
 
-function animate(){
+const keys = {};
+
+window.addEventListener("keydown", (e) => {
+    keys[e.key.toLowerCase()] = true;
+});
+
+window.addEventListener("keyup", (e) => {
+    keys[e.key.toLowerCase()] = false;
+});
+
+function animate() {
 
     requestAnimationFrame(animate);
 
     const speed = 0.1;
 
-    if(keys["w"])
-        camera.position.z -= speed;
+    if (keys["w"]) camera.position.z -= speed;
+    if (keys["s"]) camera.position.z += speed;
+    if (keys["a"]) camera.position.x -= speed;
+    if (keys["d"]) camera.position.x += speed;
 
-    if(keys["s"])
-        camera.position.z += speed;
-
-    if(keys["a"])
-        camera.position.x -= speed;
-
-    if(keys["d"])
-        camera.position.x += speed;
-
-    renderer.render(scene,camera);
+    renderer.render(scene, camera);
 }
+
 animate();
 
 </script>
 
 </body>
 </html>
-
-camera.position.set(0,2,15);
-const keys = {};
-
-window.addEventListener("keydown",(e)=>{
-    keys[e.key.toLowerCase()] = true;
-});
-
-window.addEventListener("keyup",(e)=>{
-    keys[e.key.toLowerCase()] = false;
-});
