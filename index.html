@@ -1,1 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Construction Viewer</title>
 
+<style>
+body {
+    margin: 0;
+    overflow: hidden;
+}
+</style>
+
+</head>
+<body>
+
+<script type="module">
+
+import * as THREE from 'https://unpkg.com/three@0.165.0/build/three.module.js';
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x87CEEB);
+
+const camera = new THREE.PerspectiveCamera(
+    75,
+    window.innerWidth/window.innerHeight,
+    0.1,
+    1000
+);
+
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// Ground
+
+const ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(100,100),
+    new THREE.MeshBasicMaterial({
+        color: 0x777777,
+        side: THREE.DoubleSide
+    })
+);
+
+ground.rotation.x = Math.PI / 2;
+scene.add(ground);
+
+// Test building
+
+const building = new THREE.Mesh(
+    new THREE.BoxGeometry(10,5,10),
+    new THREE.MeshBasicMaterial({
+        color: 0xff9900
+    })
+);
+
+building.position.y = 2.5;
+
+scene.add(building);
+
+camera.position.set(0,2,10);
+
+const keys = {};
+
+window.addEventListener("keydown", e=>{
+    keys[e.key.toLowerCase()] = true;
+});
+
+window.addEventListener("keyup", e=>{
+    keys[e.key.toLowerCase()] = false;
+});
+
+function animate(){
+
+    requestAnimationFrame(animate);
+
+    const speed = 0.1;
+
+    if(keys["w"]){
+        camera.position.z -= speed;
+    }
+
+    if(keys["s"]){
+        camera.position.z += speed;
+    }
+
+    if(keys["a"]){
+        camera.position.x -= speed;
+    }
+
+    if(keys["d"]){
+        camera.position.x += speed;
+    }
+
+    renderer.render(scene,camera);
+}
+
+animate();
+
+</script>
+
+</body>
+</html>
