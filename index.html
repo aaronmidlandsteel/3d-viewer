@@ -163,10 +163,10 @@ const wallRebarMaterial = new THREE.MeshStandardMaterial({
 
 for(let i = -10; i <= 10; i += 1){
 
-    const bar = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.04, 0.04, 7)
-        wallRebarMaterial
-    );
+ const bar = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.04, 0.04, 7),
+    wallRebarMaterial
+);
 
     bar.position.set(i, 3.5, -20);
 
@@ -177,10 +177,11 @@ for(let i = -10; i <= 10; i += 1){
 
 for(let y = 0.5; y <= 5.5; y += 0.5){
 
-    const bar = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.04, 0.04, 20),
-        wallRebarMaterial
-    );
+const bar = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.04, 0.04, 20),
+    wallRebarMaterial
+);
+
 
     bar.rotation.z = Math.PI / 2;
 
