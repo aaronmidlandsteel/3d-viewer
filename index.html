@@ -149,7 +149,45 @@ for (let i = -10; i <= 10; i += 1) {
     scene.add(bar2);
 }
 ``
+/* =====================================================
+   RETAINING WALL REBAR
+===================================================== */
 
+const wallRebarMaterial = new THREE.MeshStandardMaterial({
+    color: 0x333333,
+    metalness: 0.9,
+    roughness: 0.4
+});
+
+// Vertical bars
+
+for(let i = -10; i <= 10; i += 1){
+
+    const bar = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.04, 0.04, 6),
+        wallRebarMaterial
+    );
+
+    bar.position.set(i, 3, -20);
+
+    scene.add(bar);
+}
+
+// Horizontal bars
+
+for(let y = 0.5; y <= 5.5; y += 0.5){
+
+    const bar = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.04, 0.04, 20),
+        wallRebarMaterial
+    );
+
+    bar.rotation.z = Math.PI / 2;
+
+    bar.position.set(0, y, -20);
+
+    scene.add(bar);
+}
 
 /* =====================================================
    STEEL COLUMNS
