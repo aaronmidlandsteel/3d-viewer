@@ -190,6 +190,44 @@ for(let y = 0.5; y <= 5.5; y += 0.5){
 }
 
     /* =====================================================
+   SECOND RETAINING WALL (90 DEGREES)
+===================================================== */
+
+// Vertical bars
+
+for(let i = -10; i <= 10; i += 1){
+
+    const bar = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.04, 0.04, 7),
+        wallRebarMaterial
+    );
+
+    bar.rotation.z = Math.PI / 2;
+
+    bar.position.set(-10, 3.5, i);
+
+    scene.add(bar);
+}
+
+// Horizontal bars
+
+for(let y = 0.5; y <= 5.5; y += 0.5){
+
+    const bar = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.04, 0.04, 20),
+        wallRebarMaterial
+    );
+
+    bar.rotation.x = Math.PI / 2;
+
+    bar.position.set(-10, y, 0);
+
+    scene.add(bar);
+}
+
+    
+
+    /* =====================================================
    CONCRETE FOOTING
 ===================================================== */
 
@@ -203,6 +241,18 @@ const footing = new THREE.Mesh(
 footing.position.set(0, 0.5, -20);
 
 scene.add(footing);
+
+
+    const footing2 = new THREE.Mesh(
+    new THREE.BoxGeometry(3, 1, 24),
+    new THREE.MeshStandardMaterial({
+        color: 0xb0b0b0
+    })
+);
+
+footing2.position.set(-10, 0.5, 0);
+
+scene.add(footing2);
 
 /* =====================================================
    STEEL COLUMNS
