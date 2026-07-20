@@ -184,6 +184,7 @@ document.addEventListener("pointerlockchange", () => {
    MOUSE LOOK
 ===================================================== */
 let yaw = 0;
+let pitch = 0;
 
 window.addEventListener("mousemove", (e) => {
 
@@ -191,7 +192,18 @@ window.addEventListener("mousemove", (e) => {
 
     yaw -= e.movementX * 0.002;
 
+    pitch -= e.movementY * 0.002;
+
+    // Prevent neck-breaking
+    pitch = Math.max(
+        -Math.PI / 2.2,
+        Math.min(Math.PI / 2.2, pitch)
+    );
+
+    camera.rotation.order = "YXZ";
+
     camera.rotation.y = yaw;
+    camera.rotation.x = pitch;
 
 });
 
