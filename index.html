@@ -164,11 +164,11 @@ const wallRebarMaterial = new THREE.MeshStandardMaterial({
 for(let i = -10; i <= 10; i += 1){
 
     const bar = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.04, 0.04, 6),
+        new THREE.CylinderGeometry(0.04, 0.04, 7)
         wallRebarMaterial
     );
 
-    bar.position.set(i, 3, -20);
+    bar.position.set(i, 3.5, -20);
 
     scene.add(bar);
 }
@@ -188,6 +188,21 @@ for(let y = 0.5; y <= 5.5; y += 0.5){
 
     scene.add(bar);
 }
+
+    /* =====================================================
+   CONCRETE FOOTING
+===================================================== */
+
+const footing = new THREE.Mesh(
+    new THREE.BoxGeometry(24, 1, 3),
+    new THREE.MeshStandardMaterial({
+        color: 0xb0b0b0
+    })
+);
+
+footing.position.set(0, 0.5, -20);
+
+scene.add(footing);
 
 /* =====================================================
    STEEL COLUMNS
