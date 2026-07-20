@@ -162,10 +162,16 @@ const steelMaterial = new THREE.MeshStandardMaterial({
 });
 
 const columnPositions = [
-    [-5, 5, -5],
-    [ 5, 5, -5],
-    [-5, 5,  5],
-    [ 5, 5,  5]
+
+    [-5, 5, -10],
+    [ 5, 5, -10],
+
+    [-5, 5,   0],
+    [ 5, 5,   0],
+
+    [-5, 5,  10],
+    [ 5, 5,  10]
+
 ];
 
 columnPositions.forEach(pos => {
@@ -185,28 +191,24 @@ columnPositions.forEach(pos => {
 
 });
 
-    /* =====================================================
-   BEAM
+/* =====================================================
+   BEAMS
 ===================================================== */
 
-const beam = new THREE.Mesh(
-    new THREE.BoxGeometry(10, 0.4, 0.4),
-    steelMaterial
-);
+const beamPositions = [-10, 0, 10];
 
-beam.position.set(0, 10, -5);
+beamPositions.forEach(z => {
 
-scene.add(beam);
+    const beam = new THREE.Mesh(
+        new THREE.BoxGeometry(10, 0.4, 0.4),
+        steelMaterial
+    );
 
-    const rearBeam = new THREE.Mesh(
-    new THREE.BoxGeometry(10, 0.4, 0.4),
-    steelMaterial
-);
+    beam.position.set(0, 10, z);
 
-rearBeam.position.set(0, 10, 5);
+    scene.add(beam);
 
-scene.add(rearBeam);
-    
+});
 
 /* =====================================================
    INPUT
