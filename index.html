@@ -121,37 +121,35 @@ scene.add(ground);
    STEEL COLUMNS
 ===================================================== */
 
-const steelMaterial = new THREE*MeshStandardMaterial({
-    color: *x777777,
+const steelMaterial = new THREE.MeshStandardMaterial({
+    color: 0x777777,
     metalness: 0.8,
-    r*ughness: 0.4
+    roughness: 0.4
 });
 
-const columnPosi*ions = [
+const columnPositions = [
     [-5, 5, -5],
     [ 5, 5, -5],
     [-5, 5,  5],
     [ 5, 5,  5]
 ];
 
-columnPositions.forEach(*os => {
+columnPositions.forEach(pos => {
 
-    const column = new TH*EE.Mesh(
-        new THREE.BoxGeom*try(0.4, 10, 0.4),
-        steelMa*erial
+    const column = new THREE.Mesh(
+        new THREE.BoxGeometry(0.4, 10, 0.4),
+        steelMaterial
     );
 
-    column.position.*et(
+    column.position.set(
         pos[0],
-        pos[1]*
+        pos[1],
         pos[2]
     );
 
-    scene.*dd(column);
+    scene.add(column);
 
 });
-
-
 /* =====================================================
    CONTAINERS
 ===================================================== */
