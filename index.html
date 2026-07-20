@@ -75,6 +75,10 @@ renderer.domElement.style.height = "100vh";
 
 document.body.appendChild(renderer.domElement);
 
+    /* =====================================================
+   CLOCK
+===================================================== */
+const clock = new THREE.Clock();
 
 /* =====================================================
    LIGHTING
@@ -114,20 +118,38 @@ scene.add(ground);
 
 
 /* =====================================================
-   MAIN BUILDING
+   STEEL COLUMNS
 ===================================================== */
 
-const structure = new THREE.Mesh(
-    new THREE.BoxGeometry(20, 8, 20),
-    new THREE.MeshStandardMaterial({
-        color: 0x999999,
-        wireframe: true
-    })
-);
+const steelMaterial = new THREE*MeshStandardMaterial({
+    color: *x777777,
+    metalness: 0.8,
+    r*ughness: 0.4
+});
 
-structure.position.y = 4;
+const columnPosi*ions = [
+    [-5, 5, -5],
+    [ 5, 5, -5],
+    [-5, 5,  5],
+    [ 5, 5,  5]
+];
 
-scene.add(structure);
+columnPositions.forEach(*os => {
+
+    const column = new TH*EE.Mesh(
+        new THREE.BoxGeom*try(0.4, 10, 0.4),
+        steelMa*erial
+    );
+
+    column.position.*et(
+        pos[0],
+        pos[1]*
+        pos[2]
+    );
+
+    scene.*dd(column);
+
+});
 
 
 /* =====================================================
