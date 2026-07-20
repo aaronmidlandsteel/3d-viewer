@@ -166,15 +166,28 @@ window.addEventListener("keydown", (e) => {
 window.addEventListener("keyup", (e) => {
     keys[e.key.toLowerCase()] = false;
 });
+/* =====================================================
+   POINTER LOCK
+===================================================== */
 
+let mouseLocked = false;
+
+document.addEventListener("click", () => {
+    document.body.requestPointerLock();
+});
+
+document.addEventListener("pointerlockchange", () => {
+    mouseLocked = document.pointerLockElement === document.body;
+});
 
 /* =====================================================
    MOUSE LOOK
 ===================================================== */
-
 let yaw = 0;
 
 window.addEventListener("mousemove", (e) => {
+
+    if (!mouseLocked) return;
 
     yaw -= e.movementX * 0.002;
 
