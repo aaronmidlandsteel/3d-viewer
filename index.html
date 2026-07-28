@@ -553,6 +553,32 @@ const wallRebarMaterial = new THREE.MeshStandardMaterial({
     });
 
     scene.add(verticalMesh);
+    /* REAR VERTICAL MAT */
+
+const rearVerticalMesh = buildInstanced(
+    verticalGeo,
+    wall2Material,
+    verticalPositions.length
+);
+
+verticalPositions.forEach((xPos, idx) => {
+
+dummy.position.set(
+    WALL2_X,
+    y,
+    WALL2_Z - 0.18
+);
+    dummy.rotation.set(0, 0, 0);
+    dummy.updateMatrix();
+
+    rearVerticalMesh.setMatrixAt(
+        idx,
+        dummy.matrix
+    );
+
+});
+
+scene.add(rearVerticalMesh);
 
     const horizontalCount =
         Math.floor(WALL2_HEIGHT / 0.25);
@@ -574,11 +600,11 @@ const wallRebarMaterial = new THREE.MeshStandardMaterial({
 
     for (let y = 0.25; y <= WALL2_HEIGHT; y += 0.25) {
 
-        dummy.position.set(
-            WALL2_X,
-            y,
-            WALL2_Z
-        );
+dummy.position.set(
+    WALL2_X + xPos,
+    WALL2_HEIGHT / 2,
+    WALL2_Z - 0.18
+);
 
         dummy.rotation.set(
             0,
@@ -595,6 +621,39 @@ const wallRebarMaterial = new THREE.MeshStandardMaterial({
     }
 
     scene.add(horizontalMesh);
+    /* REAR HORIZONTAL MAT */
+
+const rearHorizontalMesh = buil*Instanced(
+    horizontalGeo,
+    *all2Material,
+    horizontalCount
+*;
+
+let rearIndex = 0;
+
+for (let y **0.25; y <= WALL2_HEIGHT; y += 0.25* {
+
+    dummy.position.set(
+      * WALL2_X,
+        y,
+        WALL2*Z + 0.18
+    );
+
+    dummy.rotatio*.set(
+        0,
+        *,
+        Math.PI / 2
+    );
+
+    *ummy.updateMatrix*);
+
+    rearHorizontalMesh.setMatr*xAt(
+        rearIndex++,
+        *ummy.matrix
+    );
+}
+
+scene.add(re*rHorizontalMesh);
 } 
 
 /* =====================================================
