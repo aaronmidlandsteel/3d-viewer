@@ -555,75 +555,11 @@ const wallRebarMaterial = new THREE.MeshStandardMaterial({
     scene.add(verticalMesh);
     /* REAR VERTICAL MAT */
 
-const rearVerticalMesh = buildInstanced(
-    verticalGeo,
-    wall2Material,
-    verticalPositions.length
-);
-
-verticalPositions.forEach((xPos, idx) => {
-
-dummy.position.set(
-    WALL2_X,
-    y,
-    WALL2_Z - 0.18
-);
-    dummy.rotation.set(0, 0, 0);
-    dummy.updateMatrix();
-
-    rearVerticalMesh.setMatrixAt(
-        idx,
-        dummy.matrix
-    );
-
-});
-
-scene.add(rearVerticalMesh);
-
-    const horizontalCount =
-        Math.floor(WALL2_HEIGHT / 0.25);
-
-    const horizontalGeo = new THREE.CylinderGeometry(
-        0.03,
-        0.03,
-        WALL2_LENGTH,
-        8
-    );
-
-    const horizontalMesh = buildInstanced(
-        horizontalGeo,
-        wall2Material,
-        horizontalCount
-    );
-
-    let index = 0;
-
-    for (let y = 0.25; y <= WALL2_HEIGHT; y += 0.25) {
-
-dummy.position.set(
-    WALL2_X + xPos,
-    WALL2_HEIGHT / 2,
-    WALL2_Z - 0.18
-);
-
-        dummy.rotation.set(
-            0,
-            0,
-            Math.PI / 2
-        );
-
-        dummy.updateMatrix();
-
-        horizontalMesh.setMatrixAt(
-            index++,
-            dummy.matrix
-        );
-    }
 
     scene.add(horizontalMesh);
     /* REAR HORIZONTAL MAT */
 
-const rearHorizontalMesh = buil*Instanced(
+const rearHorizontalMesh = builtInstanced(
     horizontalGeo,
     *all2Material,
     horizontalCount
@@ -639,7 +575,7 @@ for (let y **0.25; y <= WALL2_HEIGHT; y += 0.25* {
         WALL2*Z + 0.18
     );
 
-    dummy.rotatio*.set(
+    dummy.rotation.set(
         0,
         *,
         Math.PI / 2
@@ -649,7 +585,7 @@ for (let y **0.25; y <= WALL2_HEIGHT; y += 0.25* {
 
     rearHorizontalMesh.setMatr*xAt(
         rearIndex++,
-        *ummy.matrix
+        dummy.matrix
     );
 }
 
