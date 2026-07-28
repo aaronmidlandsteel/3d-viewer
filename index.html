@@ -509,7 +509,7 @@ const wallRebarMaterial = new THREE.MeshStandardMaterial({
     scene.add(horizMesh);
 }
 
-   /* =====================================================
+/* =====================================================
    SECOND RETAINING WALL REBAR CAGE
 ===================================================== */
 
@@ -540,6 +540,7 @@ const wallRebarMaterial = new THREE.MeshStandardMaterial({
     );
 
     verticalPositions.forEach((xPos, idx) => {
+
         dummy.position.set(
             WALL2_X + xPos,
             WALL2_HEIGHT / 2,
@@ -549,49 +550,58 @@ const wallRebarMaterial = new THREE.MeshStandardMaterial({
         dummy.rotation.set(0, 0, 0);
         dummy.updateMatrix();
 
-        verticalMesh.setMatrixAt(idx, dummy.matrix);
+        verticalMesh.setMatrixAt(
+            idx,
+            dummy.matrix
+        );
     });
 
     scene.add(verticalMesh);
-    /* REAR VERTICAL MAT */
 
+    const horizontalCount =
+        Math.floor(WALL2_HEIGHT / 0.25);
+
+    const horizontalGeo =
+        new THREE.CylinderGeometry(
+            0.03,
+            0.03,
+            WALL2_LENGTH,
+            8
+        );
+
+    const horizontalMesh =
+        buildInstanced(
+            horizontalGeo,
+            wall2Material,
+            horizontalCount
+        );
+
+    let index = 0;
+
+    for (let y = 0.25; y <= WALL2_HEIGHT; y += 0.25) {
+
+        dummy.position.set(
+            WALL2_X,
+            y,
+            WALL2_Z
+        );
+
+        dummy.rotation.set(
+            0,
+            0,
+            Math.PI / 2
+        );
+
+        dummy.updateMatrix();
+
+        horizontalMesh.setMatrixAt(
+            index++,
+            dummy.matrix
+        );
+    }
 
     scene.add(horizontalMesh);
-    /* REAR HORIZONTAL MAT */
-
-const rearHorizontalMesh = builtInstanced(
-    horizontalGeo,
-    *all2Material,
-    horizontalCount
-*;
-
-let rearIndex = 0;
-
-for (let y **0.25; y <= WALL2_HEIGHT; y += 0.25* {
-
-    dummy.position.set(
-      * WALL2_X,
-        y,
-        WALL2*Z + 0.18
-    );
-
-    dummy.rotation.set(
-        0,
-        *,
-        Math.PI / 2
-    );
-
-    *ummy.updateMatrix*);
-
-    rearHorizontalMesh.setMatr*xAt(
-        rearIndex++,
-        dummy.matrix
-    );
 }
-
-scene.add(re*rHorizontalMesh);
-} 
-
 /* =====================================================
    CONCRETE FOOTINGS
 ===================================================== */
