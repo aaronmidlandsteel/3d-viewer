@@ -509,6 +509,93 @@ const wallRebarMaterial = new THREE.MeshStandardMaterial({
     scene.add(horizMesh);
 }
 
+   /* =====================================================
+   SECOND RETAINING WALL REBAR CAGE
+===================================================== */
+
+{
+    const wall2Material = new THREE.MeshStandardMaterial({
+        color: 0x4a4a4a,
+        metalness: 0.9,
+        roughness: 0.4
+    });
+
+    const verticalPositions = [];
+
+    for (let x = -WALL2_LENGTH / 2; x <= WALL2_LENGTH / 2; x += 0.25) {
+        verticalPositions.push(x);
+    }
+
+    const verticalGeo = new THREE.CylinderGeometry(
+        0.03,
+        0.03,
+        WALL2_HEIGHT,
+        8
+    );
+
+    const verticalMesh = buildInstanced(
+        verticalGeo,
+        wall2Material,
+        verticalPositions.length
+    );
+
+    verticalPositions.forEach((xPos, idx) => {
+        dummy.position.set(
+            WALL2_X + xPos,
+            WALL2_HEIGHT / 2,
+            WALL2_Z
+        );
+
+        dummy.rotation.set(0, 0, 0);
+        dummy.updateMatrix();
+
+        verticalMesh.setMatrixAt(idx, dummy.matrix);
+    });
+
+    scene.add(verticalMesh);
+
+    const horizontalCount =
+        Math.floor(WALL2_HEIGHT / 0.25);
+
+    const horizontalGeo = new THREE.CylinderGeometry(
+        0.03,
+        0.03,
+        WALL2_LENGTH,
+        8
+    );
+
+    const horizontalMesh = buildInstanced(
+        horizontalGeo,
+        wall2Material,
+        horizontalCount
+    );
+
+    let index = 0;
+
+    for (let y = 0.25; y <= WALL2_HEIGHT; y += 0.25) {
+
+        dummy.position.set(
+            WALL2_X,
+            y,
+            WALL2_Z
+        );
+
+        dummy.rotation.set(
+            0,
+            0,
+            Math.PI / 2
+        );
+
+        dummy.updateMatrix();
+
+        horizontalMesh.setMatrixAt(
+            index++,
+            dummy.matrix
+        );
+    }
+
+    scene.add(horizontalMesh);
+} 
 
 /* =====================================================
    CONCRETE FOOTINGS
